@@ -34,23 +34,42 @@ def get_color(data, idx):
     return np.where(val > threshold, upper, lower)  # binarize 0 or 1
 
 
-def get_moore_neighborhood_cell_states(data, index):
-    # rx, ry = relative coordinate from 0,0
-    # [-1,1], [0,1], [1,1] -> y is always 1
-    # [-1,0], [0,0], [1,0] -> y is always 0
-    # [-1,-1], [0,-1], [1,-1] -> y is always -1
+# def get_moore_neighborhood_cell_states(data, index, weight=1):
+#     # rx, ry = relative coordinate from 0,0
+#     # [-1,1], [0,1], [1,1] -> y is always 1
+#     # [-1,0], [0,0], [1,0] -> y is always 0
+#     # [-1,-1], [0,-1], [1,-1] -> y is always -1
 
-    sum = 0
-    rcood = [-1, 0, 1]
-    for ry in rcood:
-        for rx in rcood:
+#     sum = 0
+#     rcood = [-1, 0, 1]
+#     for ry in rcood:
+#         for rx in rcood:
+#             rindex = np.sum(index, [rx, ry])
+#             sum += get_color(data, rindex)
+#     return sum*weight
+
+
+def get_around_moore_cell_states(data, index, distance, mweight=1, aweight=-0.4):
+    # rx, ry = relative coordinate from [0,0] (distance=3)
+    # moore neighborhood = ([rx, ry] = -1 to 1)
+    # [-3,3] ... [3,3] -> y is always 3
+    # ...
+    # [-3,0] ... [3,0] -> y is always 0
+    # ...
+    # [-3,-3] ... [3,-3] -> y is always -3
+
+    msum = 0
+    asum = 0
+    for ry in range(-distance, distance+1):
+        for rx in range(-distance, distance+1):
+
+            if -1 <= rx & ry <= 1:
+                msum += get_color(data, rindex)
+                continue
+
             rindex = np.sum(index, [rx, ry])
-            sum += get_color(data, rindex)
-    return sum
-
-
-def get_around_moore_cell_states(data, distance):
-    NotImplemented
+            asum += get_color(data, rindex)
+    return msum*mweight + asum*aweight
 
 
 if __name__ == "__main__":
