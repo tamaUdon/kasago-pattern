@@ -27,17 +27,36 @@ def generate_grid_figure():  # generate 100x100 grid figure with binary colors
 
 
 # ref. https://matplotlib.org/stable/tutorials/intermediate/imshow_extent.html#sphx-glr-tutorials-intermediate-imshow-extent-py
-def get_color(idxlist, data):
+def get_color(data, idx):
     """Return the data color of an index."""
     threshold, upper, lower = 0.5, 1, 0
-    val = data[idxlist] / data.max()  # normalize 0 to 1
+    val = data[idx] / data.max()  # normalize 0 to 1
     return np.where(val > threshold, upper, lower)  # binarize 0 or 1
+
+
+def get_moore_neighborhood_cell_states(data, index):
+    # rx, ry = relative coordinate from 0,0
+    # [-1,1], [0,1], [1,1] -> y is always 1
+    # [-1,0], [0,0], [1,0] -> y is always 0
+    # [-1,-1], [0,-1], [1,-1] -> y is always -1
+
+    sum = 0
+    rcood = [-1, 0, 1]
+    for ry in rcood:
+        for rx in rcood:
+            rindex = np.sum(index, [rx, ry])
+            sum += get_color(data, rindex)
+    return sum
+
+
+def get_around_moore_cell_states(data, distance):
+    NotImplemented
 
 
 if __name__ == "__main__":
     generate_grid_figure()
 
-# TODO: check around cell state
+# DONE: check around cell state
 # MEMO: np.shape index is not equal to plt index
 # TODO: calculate cell weight
 # TODO: define cell dead or alive
