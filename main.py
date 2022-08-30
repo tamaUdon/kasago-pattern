@@ -8,15 +8,16 @@ import matplotlib.colors as plcolors
 import asyncio
 
 N = 100  # grid scale
+data = np.zeros
 cmap = plcolors.ListedColormap(['white', 'black'])  # 0,1
 
 
 def generate_grid_shape(scale=N):
-    # generate 100x100 grid shape with binary colors
-    return np.reshape(np.random.rand(scale**2), newshape=(scale, scale))
+    # generate NxN grid shape with binary colors
+    data = np.reshape(np.random.rand(scale**2), newshape=(scale, scale))
 
+    print("data address 1", id(data))
 
-def show_figure(data):
     im = plt.imshow(data,
                     cmap=cmap,
                     interpolation='none',
@@ -34,14 +35,14 @@ def show_figure(data):
 
 
 # ref. https://matplotlib.org/stable/tutorials/intermediate/imshow_extent.html#sphx-glr-tutorials-intermediate-imshow-extent-py
-def get_color(data, idx):
+def get_color(idx):
     """Return the data color of an index."""
     threshold, upper, lower = 0.5, 1, 0
-    val = data[idx] / data.max()  # normalize 0 to 1
+    val = data[idx] / np.max(data)  # normalize 0 to 1
     return np.where(val > threshold, upper, lower)  # binarize 0 or 1
 
 
-def get_around_moore_cell_states(data, index, distance=3, mweight=1, aweight=-0.4):
+def get_around_moore_cell_states(index, distance=3, mweight=1, aweight=-0.4):
     # rx, ry = relative coordinate from [0,0] (distance=3)
     # moore neighborhood = ([rx, ry] = -1 to 1)
     # [-3,3] ... [3,3] -> y is always 3
@@ -50,23 +51,30 @@ def get_around_moore_cell_states(data, index, distance=3, mweight=1, aweight=-0.
     # ...
     # [-3,-3] ... [3,-3] -> y is always -3
 
+    print("data address 2", id(data))
+
     msum = 0
     asum = 0
     for ry in range(-distance, distance+1):
         for rx in range(-distance, distance+1):
 
             if -1 <= rx & ry <= 1:
-                msum += get_color(data, rindex)
+                msum += get_color(rindex)
                 continue
 
             rindex = np.sum([index, [rx, ry]])
-            asum += get_color(data, rindex)  # TODO: debug return np array
+            asum += get_color(rindex)  # TODO: debug return np array
     return msum*mweight + asum*aweight
 
 
-def calculate_dead_or_alive(data, index, state, threshold=0):
+def calculate_dead_or_alive(index, state, threshold=0):
+
+    print("data address 3", id(data))
+
     if threshold <= state:
         # draw black (alive)
+        print("index=", index)
+        print("data[index]=", data[index])
         data[index] = 1
     else:
         #  draw white (dead)
@@ -74,16 +82,21 @@ def calculate_dead_or_alive(data, index, state, threshold=0):
 
 
 async def main():
-    data = deepcopy(generate_grid_shape())
-    show_figure(deepcopy(data))
+    generate_grid_shape()
+    print("data address 1", id(data))
 
     for _ in range(4):
         for i in range(N):
             for j in range(N):
-                state = get_around_moore_cell_states(deepcopy(data), [i, j])
-                calculate_dead_or_alive(deepcopy(data), [i, j], state)
+                state = get_around_moore_cell_states([i, j])
+                calculate_dead_or_alive([i, j], state)
             print(i + " loop now!")
-        show_figure(deepcopy(data))
+        plt.imshow(data,
+                   cmap=cmap,
+                   interpolation='none',
+                   vmin=0, vmax=1,
+                   aspect='equal')
+        plt.show()
         await asyncio.sleep(0.1)
         # TODO: check data is copied instance?
     print("calculate done!")
