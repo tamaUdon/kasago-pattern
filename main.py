@@ -1,16 +1,23 @@
 # script for generate kasago-pattern
 # 30　Aug 2022 @tama_Ud
 
+from copy import deepcopy
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.colors as plcolors
+import asyncio
+
+N = 100  # grid scale
+cmap = plcolors.ListedColormap(['white', 'black'])  # 0,1
 
 
-def generate_grid_figure():  # generate 100x100 grid figure with binary colors
-    # TODO: check which is upper val
-    cmap = plcolors.ListedColormap(['white', 'black'])  # 0,1
-    rcshape = np.reshape(np.random.rand(10000), newshape=(100, 100))
-    im = plt.imshow(rcshape,
+def generate_grid_shape(scale=N):
+    # generate 100x100 grid shape with binary colors
+    return np.reshape(np.random.rand(scale**2), newshape=(scale, scale))
+
+
+def show_figure(data):
+    im = plt.imshow(data,
                     cmap=cmap,
                     interpolation='none',
                     vmin=0, vmax=1,
@@ -34,22 +41,7 @@ def get_color(data, idx):
     return np.where(val > threshold, upper, lower)  # binarize 0 or 1
 
 
-# def get_moore_neighborhood_cell_states(data, index, weight=1):
-#     # rx, ry = relative coordinate from 0,0
-#     # [-1,1], [0,1], [1,1] -> y is always 1
-#     # [-1,0], [0,0], [1,0] -> y is always 0
-#     # [-1,-1], [0,-1], [1,-1] -> y is always -1
-
-#     sum = 0
-#     rcood = [-1, 0, 1]
-#     for ry in rcood:
-#         for rx in rcood:
-#             rindex = np.sum(index, [rx, ry])
-#             sum += get_color(data, rindex)
-#     return sum*weight
-
-
-def get_around_moore_cell_states(data, index, distance, mweight=1, aweight=-0.4):
+def get_around_moore_cell_states(data, index, distance=3, mweight=1, aweight=-0.4):
     # rx, ry = relative coordinate from [0,0] (distance=3)
     # moore neighborhood = ([rx, ry] = -1 to 1)
     # [-3,3] ... [3,3] -> y is always 3
@@ -67,16 +59,35 @@ def get_around_moore_cell_states(data, index, distance, mweight=1, aweight=-0.4)
                 msum += get_color(data, rindex)
                 continue
 
-            rindex = np.sum(index, [rx, ry])
-            asum += get_color(data, rindex)
+            rindex = np.sum([index, [rx, ry]])
+            asum += get_color(data, rindex)  # TODO: debug return np array
     return msum*mweight + asum*aweight
 
 
-if __name__ == "__main__":
-    generate_grid_figure()
+def calculate_dead_or_alive(data, index, state, threshold=0):
+    if threshold <= state:
+        # draw black (alive)
+        data[index] = 1
+    else:
+        #  draw white (dead)
+        data[index] = 0
 
-# DONE: check around cell state
-# MEMO: np.shape index is not equal to plt index
-# TODO: calculate cell weight
-# TODO: define cell dead or alive
-# TODO: imshow
+
+async def main():
+    data = deepcopy(generate_grid_shape())
+    show_figure(deepcopy(data))
+
+    for _ in range(4):
+        for i in range(N):
+            for j in range(N):
+                state = get_around_moore_cell_states(deepcopy(data), [i, j])
+                calculate_dead_or_alive(deepcopy(data), [i, j], state)
+            print(i + " loop now!")
+        show_figure(deepcopy(data))
+        await asyncio.sleep(0.1)
+        # TODO: check data is copied instance?
+    print("calculate done!")
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
