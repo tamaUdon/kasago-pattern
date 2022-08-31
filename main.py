@@ -1,20 +1,20 @@
 # script for generate kasago-pattern
 # 30　Aug 2022 @tama_Ud
 
-from copy import deepcopy
+from typing import Any
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.colors as plcolors
 import asyncio
 
 N = 100  # grid scale
-data = np.zeros
+data = np.reshape(np.random.rand(N**2), newshape=(N, N))
 cmap = plcolors.ListedColormap(['white', 'black'])  # 0,1
 
 
-def generate_grid_shape(scale=N):
+def generate_grid_shape():
     # generate NxN grid shape with binary colors
-    data = np.reshape(np.random.rand(scale**2), newshape=(scale, scale))
+    # data = np.reshape(np.random.rand(scale**2), newshape=(scale, scale))
 
     print("data address 1", id(data))
 
@@ -58,23 +58,23 @@ def get_around_moore_cell_states(index, distance=3, mweight=1, aweight=-0.4):
     for ry in range(-distance, distance+1):
         for rx in range(-distance, distance+1):
 
+            # skip moore neighborhood
             if -1 <= rx & ry <= 1:
-                msum += get_color(rindex)
+                msum += get_color(index)
                 continue
 
             rindex = np.sum([index, [rx, ry]])
             asum += get_color(rindex)  # TODO: debug return np array
-    return msum*mweight + asum*aweight
+    return (msum*mweight + asum*aweight)  # float
 
 
-def calculate_dead_or_alive(index, state, threshold=0):
+def calculate_dead_or_alive(index, state, threshold=0.0):
 
-    print("data address 3", id(data))
-
+    # ValueError: The truth value of an array with more than one element is ambiguous. Use a.any() or a.all()
+    # TODO debug: both of vals are not numpy array.
     if threshold <= state:
+
         # draw black (alive)
-        print("index=", index)
-        print("data[index]=", data[index])
         data[index] = 1
     else:
         #  draw white (dead)
