@@ -35,11 +35,16 @@ def generate_grid_shape():
 
 
 # ref. https://matplotlib.org/stable/tutorials/intermediate/imshow_extent.html#sphx-glr-tutorials-intermediate-imshow-extent-py
-def get_color(idx):
+def get_color(idxarr):
     """Return the data color of an index."""
     threshold, upper, lower = 0.5, 1, 0
-    val = data[idx] / np.max(data)  # normalize 0 to 1
-    return np.where(val > threshold, upper, lower)  # binarize 0 or 1
+    # TODO: fix IndexError: index 100 is out of bounds for axis 1 with size 100
+    val = data[idxarr[0], idxarr[1]] / data.max()  # normalize 0 to 1
+    print("idxarr", idxarr)
+    #print("data[idxarr]", data[idxarr])
+    print("data.max()", data.max())
+    print("color:", np.where(val > threshold, upper, lower))
+    return np.where(val > threshold, upper, lower).item()  # binarize 0 or 1
 
 
 def get_around_moore_cell_states(index, distance=3, mweight=1, aweight=-0.4):
@@ -56,24 +61,31 @@ def get_around_moore_cell_states(index, distance=3, mweight=1, aweight=-0.4):
     msum = 0
     asum = 0
     for ry in range(-distance, distance+1):
+        # skip if ry is over 100
+        if ry > 100:  # TODO: refactor to inline args
+            continue
+
         for rx in range(-distance, distance+1):
+            # skip if rx or ry is over 100
+            if rx > 100:  # TODO: refactor to inline args
+                continue
 
             # skip moore neighborhood
             if -1 <= rx & ry <= 1:
                 msum += get_color(index)
                 continue
 
-            rindex = np.sum([index, [rx, ry]])
-            asum += get_color(rindex)  # TODO: debug return np array
-    return (msum*mweight + asum*aweight)  # float
+            rindex = np.sum([index, [rx, ry]], axis=0)
+            asum += get_color(rindex)
+    return (msum*mweight + asum*aweight)
 
 
 def calculate_dead_or_alive(index, state, threshold=0.0):
 
-    # ValueError: The truth value of an array with more than one element is ambiguous. Use a.any() or a.all()
-    # TODO debug: both of vals are not numpy array.
-    if threshold <= state:
+    # threshold = float
+    # state = np.ndarray
 
+    if threshold <= state:
         # draw black (alive)
         data[index] = 1
     else:
@@ -88,7 +100,7 @@ async def main():
     for _ in range(4):
         for i in range(N):
             for j in range(N):
-                state = get_around_moore_cell_states([i, j])
+                state = get_around_moore_cell_states([i, j])  # np.array
                 calculate_dead_or_alive([i, j], state)
             print(i + " loop now!")
         plt.imshow(data,
@@ -98,7 +110,6 @@ async def main():
                    aspect='equal')
         plt.show()
         await asyncio.sleep(0.1)
-        # TODO: check data is copied instance?
     print("calculate done!")
 
 
