@@ -38,12 +38,8 @@ def generate_grid_shape():
 def get_color(idxarr):
     """Return the data color of an index."""
     threshold, upper, lower = 0.5, 1, 0
-    # TODO: fix IndexError: index 100 is out of bounds for axis 1 with size 100
-    val = data[idxarr[0], idxarr[1]] / data.max()  # normalize 0 to 1
-    print("idxarr", idxarr)
-    #print("data[idxarr]", data[idxarr])
-    print("data.max()", data.max())
-    print("color:", np.where(val > threshold, upper, lower))
+    # normalize 0 to 1 # TODO: fix error? invalid value encountered in double_scalars
+    val = data[idxarr[0], idxarr[1]] / data.max()
     return np.where(val > threshold, upper, lower).item()  # binarize 0 or 1
 
 
@@ -56,26 +52,28 @@ def get_around_moore_cell_states(index, distance=3, mweight=1, aweight=-0.4):
     # ...
     # [-3,-3] ... [3,-3] -> y is always -3
 
-    print("data address 2", id(data))
-
     msum = 0
     asum = 0
     for ry in range(-distance, distance+1):
-        # skip if ry is over 100
-        if ry > 100:  # TODO: refactor to inline args
-            continue
-
         for rx in range(-distance, distance+1):
-            # skip if rx or ry is over 100
-            if rx > 100:  # TODO: refactor to inline args
-                continue
 
             # skip moore neighborhood
-            if -1 <= rx & ry <= 1:
-                msum += get_color(index)
+            if -1 <= rx & rx <= 1:
+                if -1 <= ry & ry <= 1:
+                    msum += get_color(index)
+                    continue
+
+            rindex = [np.sum(rx + index[0]), np.sum(ry + index[1])]
+
+            # skip if ry is over 100
+            if N-1 < rindex[0] or rindex[0] < 0:  # TODO: refactor to inline args
                 continue
 
-            rindex = np.sum([index, [rx, ry]], axis=0)
+            # skip if rx is over 100
+            if N-1 < rindex[1] or rindex[1] < 0:  # TODO: refactor to inline args
+                continue
+
+            #print("rindex", rindex)
             asum += get_color(rindex)
     return (msum*mweight + asum*aweight)
 
@@ -102,15 +100,18 @@ async def main():
             for j in range(N):
                 state = get_around_moore_cell_states([i, j])  # np.array
                 calculate_dead_or_alive([i, j], state)
-            print(i + " loop now!")
-        plt.imshow(data,
-                   cmap=cmap,
-                   interpolation='none',
-                   vmin=0, vmax=1,
-                   aspect='equal')
-        plt.show()
-        await asyncio.sleep(0.1)
+        # plt.imshow(data,
+        #            cmap=cmap,
+        #            interpolation='none',
+        #            vmin=0, vmax=1,
+        #            aspect='equal')
+        # await asyncio.sleep(0.1)
     print("calculate done!")
+    plt.imshow(data,
+               cmap=cmap,
+               interpolation='none',
+               vmin=0, vmax=1,
+               aspect='equal')
 
 
 if __name__ == "__main__":
