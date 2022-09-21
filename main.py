@@ -28,8 +28,8 @@ def generate_grid_shape():
     ax.set_xticks([])
     ax.set_yticks([])
 
-    #print(get_color((0, 0), rcshape))
-    #print(get_color((0, -1), rcshape))
+    # print(get_color((0, 0), rcshape))
+    # print(get_color((0, -1), rcshape))
 
     plt.show()
 
@@ -43,7 +43,7 @@ def get_color(idxarr):
     return np.where(val > threshold, upper, lower).item()  # binarize 0 or 1
 
 
-def get_around_moore_cell_states(index, distance=3, mweight=1, aweight=-0.4):
+def get_around_moore_cell_states(indexarr, distance=3, mweight=1, aweight=-0.4):
     # rx, ry = relative coordinate from [0,0] (distance=3)
     # moore neighborhood = ([rx, ry] = -1 to 1)
     # [-3,3] ... [3,3] -> y is always 3
@@ -60,10 +60,10 @@ def get_around_moore_cell_states(index, distance=3, mweight=1, aweight=-0.4):
             # skip moore neighborhood
             if -1 <= rx & rx <= 1:
                 if -1 <= ry & ry <= 1:
-                    msum += get_color(index)
+                    msum += get_color(indexarr)
                     continue
 
-            rindex = [np.sum(rx + index[0]), np.sum(ry + index[1])]
+            rindex = [np.sum(rx + indexarr[0]), np.sum(ry + indexarr[1])]
 
             # skip if ry is over 100
             if N-1 < rindex[0] or rindex[0] < 0:  # TODO: refactor to inline args
@@ -73,7 +73,7 @@ def get_around_moore_cell_states(index, distance=3, mweight=1, aweight=-0.4):
             if N-1 < rindex[1] or rindex[1] < 0:  # TODO: refactor to inline args
                 continue
 
-            #print("rindex", rindex)
+            # print("rindex", rindex)
             asum += get_color(rindex)
     return (msum*mweight + asum*aweight)
 
@@ -95,6 +95,7 @@ async def main():
     generate_grid_shape()
     print("data address 1", id(data))
 
+    # calculate cell dead or alive 4 times
     for _ in range(4):
         for i in range(N):
             for j in range(N):
