@@ -38,7 +38,9 @@ def generate_grid_shape():
 def get_color(idxarr):
     """Return the data color of an index."""
     threshold, upper, lower = 0.5, 1, 0
-    # normalize 0 to 1 # TODO: fix error? invalid value encountered in double_scalars
+    # normalize 0 to 1
+    # TODO: fix error? invalid value encountered in double_scalars
+    # TODO: 1回目の計算の後、画面が真っ黒になる
     val = data[idxarr[0], idxarr[1]] / data.max()
     return np.where(val > threshold, upper, lower).item()  # binarize 0 or 1
 
