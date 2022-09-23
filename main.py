@@ -40,7 +40,7 @@ def get_color(idxarr):
     threshold, upper, lower = 0.5, 1, 0
     # normalize 0 to 1
     # TODO: fix error? invalid value encountered in double_scalars
-    # TODO: 1回目の計算の後、画面が真っ黒になる
+    # TODO: 1回目の計算の後、画面が真っ黒になる -> 白に変更できているか確認 -> 色変更関数 -> セルの指定関数
     val = data[idxarr[0], idxarr[1]] / data.max()
     return np.where(val > threshold, upper, lower).item()  # binarize 0 or 1
 
@@ -77,20 +77,22 @@ def get_around_moore_cell_states(indexarr, distance=3, mweight=1, aweight=-0.4):
 
             # print("rindex", rindex)
             asum += get_color(rindex)
+    print("msum*mweight", msum*mweight)
+    print("asum*aweight", asum*aweight)
     return (msum*mweight + asum*aweight)
 
 
-def calculate_dead_or_alive(index, state, threshold=0.0):
+def calculate_dead_or_alive(state, threshold=0.0):
 
     # threshold = float
     # state = np.ndarray
 
     if threshold <= state:
         # draw black (alive)
-        data[index] = 1
+        return 1
     else:
         #  draw white (dead)
-        data[index] = 0
+        return 0
 
 
 async def main():
@@ -102,20 +104,14 @@ async def main():
         for i in range(N):
             for j in range(N):
                 state = get_around_moore_cell_states([i, j])  # np.array
-                calculate_dead_or_alive([i, j], state)
-        # plt.imshow(data,
-        #            cmap=cmap,
-        #            interpolation='none',
-        #            vmin=0, vmax=1,
-        #            aspect='equal')
-        # await asyncio.sleep(0.1)
+                data[i, j] = calculate_dead_or_alive(data[i, j], state)
+        plt.imshow(data,
+                   cmap=cmap,
+                   interpolation='none',
+                   vmin=0, vmax=1,
+                   aspect='equal')
+        await asyncio.sleep(0.1)
     print("calculate done!")
-    plt.imshow(data,
-               cmap=cmap,
-               interpolation='none',
-               vmin=0, vmax=1,
-               aspect='equal')
-
 
 if __name__ == "__main__":
     asyncio.run(main())
