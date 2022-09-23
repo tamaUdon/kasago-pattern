@@ -16,8 +16,6 @@ def generate_grid_shape():
     # generate NxN grid shape with binary colors
     # data = np.reshape(np.random.rand(scale**2), newshape=(scale, scale))
 
-    print("data address 1", id(data))
-
     im = plt.imshow(data,
                     cmap=cmap,
                     interpolation='none',
@@ -27,9 +25,6 @@ def generate_grid_shape():
     ax = plt.gca()
     ax.set_xticks([])
     ax.set_yticks([])
-
-    # print(get_color((0, 0), rcshape))
-    # print(get_color((0, -1), rcshape))
 
     plt.show()
 
@@ -45,7 +40,7 @@ def get_color(idxarr):
     return np.where(val > threshold, upper, lower).item()  # binarize 0 or 1
 
 
-def get_around_moore_cell_states(indexarr, distance=3, mweight=1, aweight=-0.4):
+def get_around_moore_cell_states(indexarr, distance=3, mweight=1, aweight=-0.2):
     # rx, ry = relative coordinate from [0,0] (distance=3)
     # moore neighborhood = ([rx, ry] = -1 to 1)
     # [-3,3] ... [3,3] -> y is always 3
@@ -77,8 +72,8 @@ def get_around_moore_cell_states(indexarr, distance=3, mweight=1, aweight=-0.4):
 
             # print("rindex", rindex)
             asum += get_color(rindex)
-    print("msum*mweight", msum*mweight)
-    print("asum*aweight", asum*aweight)
+    #print("msum*mweight", msum*mweight)
+    #print("asum*aweight", asum*aweight)
     return (msum*mweight + asum*aweight)
 
 
@@ -97,21 +92,19 @@ def calculate_dead_or_alive(state, threshold=0.0):
 
 async def main():
     generate_grid_shape()
-    print("data address 1", id(data))
-
     # calculate cell dead or alive 4 times
-    for _ in range(4):
-        for i in range(N):
+    for _ in range(8):
+        for i in range(0, N, 6):
             for j in range(N):
                 state = get_around_moore_cell_states([i, j])  # np.array
                 data[i, j] = calculate_dead_or_alive(data[i, j], state)
-        plt.imshow(data,
-                   cmap=cmap,
-                   interpolation='none',
-                   vmin=0, vmax=1,
-                   aspect='equal')
-        await asyncio.sleep(0.1)
-    print("calculate done!")
+    # うまく表示されない...
+    plt.imshow(data,
+               cmap=cmap,
+               interpolation='none',
+               vmin=0, vmax=1,
+               aspect='equal')
+    plt.show()
 
 if __name__ == "__main__":
     asyncio.run(main())
